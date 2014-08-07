@@ -18,13 +18,15 @@ pvclust <- function(data, method.hclust="average",
     # multiscale bootstrap
 		cat('Starting bootstraps...\n')
     size <- floor(n*r)
-    rl <- length(size)
+#    rl <- length(size)
 
-    if(rl == 1) {
-      if(r != 1.0)
-        warning("Relative sample size r is set to 1.0. AU p-values are not calculated\n")
-
-      r <- list(1.0)
+    if(length(r) == 1) {
+		# override this in order to permit splitting of boostraps for r's over independent runs
+#      if(r != 1.0)
+#        warning("Relative sample size r is set to 1.0. AU p-values are not calculated\n")
+#
+#      r <- list(1.0)
+			r = list(r)
     }
     else
       r <- as.list(size/n)

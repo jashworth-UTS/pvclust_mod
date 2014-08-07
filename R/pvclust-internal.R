@@ -179,7 +179,6 @@ boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
       x.hclust <- hclust(distance,method=method.hclust)
 			# keep count by comparing 'member' structures directly (c++ call)
 			newcounts = .Call(count_edge_matches, object.hclust$merge, x.hclust$merge)
-			oldec = edges.cnt
 			edges.cnt = edges.cnt + newcounts
     } else {
       x.hclust <- NULL
@@ -200,6 +199,9 @@ boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
   boot <- list(edges.cnt=edges.cnt, method.dist=method.dist, use.cor=use.cor,
                method.hclust=method.hclust, nboot=nboot, size=size, r=r, store=st)
   class(boot) <- "boot.hclust"
+
+	fname = paste('pvclust.r_',r,'.RData',sep='')
+	save(boot,file=fname)
 
   return(boot)
 }
