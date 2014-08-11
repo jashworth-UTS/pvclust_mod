@@ -30,49 +30,9 @@ hc2axes <- function(x)
 }
 
 # for improved speed
-hc2split = function(hc,return_members=T){
-	.Call(hc2_split, hc$merge, return_members)
+hc2split = function(hc){
+	.Call(hc2_split, hc$merge)
 }
-
-# deprecated/replaced by much faster c++ function above
-hc2split_R <- function(x)
-  {
-	# VERY SLOW on big data; nearly instantaneous when rewritten in c++
-	cat('hc2split...')
-    A <- x$merge # (n-1,n) matrix
-    n <- nrow(A) + 1
-    B <- list()
-
-    for(i in 1:(n-1)){
-        ai <- A[i,1]
-
-        if(ai < 0)
-          B[[i]] <- -ai
-        else
-          B[[i]] <- B[[ai]]
-
-        ai <- A[i,2]
-
-        if(ai < 0)
-          B[[i]] <- sort(c(B[[i]],-ai))
-        else
-          B[[i]] <- sort(c(B[[i]],B[[ai]]))
-      }
-
-    CC <- matrix(rep(0,n*(n-1)),nrow=(n-1),ncol=n)
-
-    for(i in 1:(n-1)){
-        bi <- B[[i]]
-        m <- length(bi)
-        for(j in 1:m)
-          CC[i,bi[j]] <- 1
-      }
-
-    split <- list(pattern=apply(CC,1,paste,collapse=""), member=B)
-
-	  cat('done\n')
-    return(split)
-  }
 
 pvclust.node <- function(x, r,...)
   {
@@ -81,71 +41,11 @@ pvclust.node <- function(x, r,...)
     return(mboot.node)
   }
 
-boot.hclust_R <- function(r, data, object.hclust, method.dist, use.cor,
-                        method.hclust, nboot, store, weight=F)
-{
-  n     <- nrow(data)
-  size  <- round(n*r, digits=0)
-  if(size == 0)
-    stop("invalid scale parameter(r)")
-  r <- size/n
-
-	# following lines are TERRIBLY SLOW on big data. Very inefficient
-	# factor(pattern) is very slow for sorting of large 'pattern' strings in R
-	cat('init edges.cnt...')
-  pattern   <- hc2split(object.hclust)$pattern
-  edges.cnt <- table(factor(pattern)) - table(factor(pattern))
-	cat('done\n')
-
-  st <- list()
-
-  # bootstrap start
-  rp <- as.character(round(r,digits=2)); if(r == 1) rp <- paste(rp,".0",sep="")
-  cat(paste("Bootstrap (r = ", rp, ")... ", sep=""))
-  w0 <- rep(1,n) # equal weight
-  na.flag <- 0
-
-  for(i in 1:nboot){
-		cat('.')
-    if(weight && r>10) {  ## <- this part should be improved
-      w1 <- as.vector(rmultinom(1,size,w0)) # resampled weight
-      suppressWarnings(distance <- distw.pvclust(data,w1,method=method.dist,use.cor=use.cor))
-    } else {
-      smpl <- sample(1:n, size, replace=TRUE)
-      suppressWarnings(distance  <- dist.pvclust(data[smpl,],method=method.dist,use.cor=use.cor))
-    }
-    if(all(is.finite(distance))) { # check if distance is valid
-      x.hclust  <- hclust(distance,method=method.hclust)
-      pattern.i <- hc2split(x.hclust)$pattern # split
-			# the following is terribly slow for large trees (10,000+)
-			cat('counts...')
-      edges.cnt <- edges.cnt + table(factor(pattern.i,  levels=pattern))
-			cat('done\n')
-    } else {
-      x.hclust <- NULL
-	  na.flag <- 1
-    }
-
-    if(store)
-      st[[i]] <- x.hclust
-  }
-  cat("Done.\n")
-  # bootstrap done
-
-  if(na.flag == 1)
-	warning(paste("inappropriate distance matrices are omitted in computation: r = ", r), call.=FALSE)
-
-  boot <- list(edges.cnt=edges.cnt, method.dist=method.dist, use.cor=use.cor,
-               method.hclust=method.hclust, nboot=nboot, size=size, r=r, store=st)
-  class(boot) <- "boot.hclust"
-
-  return(boot)
-}
-
 # modifed for major efficiency(speed) improvements in c++
 boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
-                        method.hclust, nboot, store, weight=F)
+                        method.hclust, nboot, store, weight=F, save=T)
 {
+	if(save) store=T
   n     <- nrow(data)
   size  <- round(n*r, digits=0)
   if(size == 0)
@@ -154,7 +54,7 @@ boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
 
   hcsplit = hc2split(object.hclust)
 
-	# just keep track of unsorted tree correspondence (new cpp function below) and sort once later
+	# just keep track of unsorted tree correspondence for now (new cpp function below)
 	edges.cnt = rep(0,length(hcsplit$member))
 	names(edges.cnt) = hcsplit$pattern
 
@@ -168,7 +68,7 @@ boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
 
   for(i in 1:nboot){
 		cat('.')
-    if(weight && r>10) {  ## <- this part should be improved
+    if(weight && r>10) {
       w1 <- as.vector(rmultinom(1,size,w0)) # resampled weight
       distance <- distw.pvclust(data,w1,method=method.dist,use.cor=use.cor)
     } else {
@@ -200,8 +100,10 @@ boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
                method.hclust=method.hclust, nboot=nboot, size=size, r=r, store=st)
   class(boot) <- "boot.hclust"
 
-	fname = paste('pvclust.r_',r,'.RData',sep='')
-	save(boot,file=fname)
+	if(save){
+		fname = paste('pvclust.r_',r,'.RData',sep='')
+		save(boot,file=fname)
+	}
 
   return(boot)
 }

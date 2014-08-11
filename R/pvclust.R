@@ -12,6 +12,8 @@ pvclust <- function(data, method.hclust="average",
     distance <- dist.pvclust(data, method=method.dist, use.cor=use.cor)
 		cat('hclust...\n')
     data.hclust <- hclust(distance, method=method.hclust)
+
+		save(data.hclust,file='data.hclust.RData')
 		# to free memory, this should be deleted now (matters for large matrices)
 		rm(distance)
 

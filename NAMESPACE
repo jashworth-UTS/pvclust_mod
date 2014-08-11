@@ -1,6 +1,8 @@
 useDynLib(pvclust, .registration=TRUE)
 export(hc2split)
+export(hc2axes)
 export(pvclust)
+export(pvclust.merge)
 export(pvpick)
 export(msfit)
 export(msplot)
