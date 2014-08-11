@@ -54,8 +54,11 @@ extern "C" {
 			for(int i(0); i<nrow; ++i){
 				std::vector<char> pat(nrow+1,'0');
 				for(size_t j(0); j<members[i].size(); ++j) pat[ members[i][j]-1 ] = '1';
-				std::string pstr(pat.begin(), pat.end());
-				p[i] = mkChar(pstr.c_str());
+				std::string pattern_string(pat.begin(), pat.end());
+				SEXP pattern_cstring;
+				PROTECT(pattern_cstring = mkChar(pattern_string.c_str()));
+				p[i] = pattern_cstring;
+				UNPROTECT(1); // pattern_cstring
 			}
 			PROTECT(r = NEW_LIST(2));
 			SET_ELEMENT(r, 0, patterns);
@@ -164,7 +167,7 @@ extern "C" {
   void R_init_pvclust(DllInfo * const info)
   {
     R_CallMethodDef callMethods[]  = {
-      {"hc2_split", (DL_FUNC) &hc2_split, 2},
+      {"hc2_split", (DL_FUNC) &hc2_split, 1},
       {"count_edge_matches", (DL_FUNC) &count_edge_matches, 2},
       {NULL, NULL, 0}
     };
