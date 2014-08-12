@@ -35,7 +35,7 @@ void get_members(Members & members, const int * const merge){
 
 extern "C" {
   SEXP hc2_split(SEXP merge_) {
-    SEXP r = NULL; // return value
+    SEXP memberlist = NULL; // return value
 
     try{
 
@@ -47,23 +47,22 @@ extern "C" {
 			get_members(members, merge);
 			UNPROTECT(1); // merge_
 
-			SEXP patterns;
-			PROTECT(patterns = NEW_CHARACTER(nrow));
-			SEXP * p = CHARACTER_POINTER(patterns);
+//			SEXP patterns;
+//			PROTECT(patterns = NEW_CHARACTER(nrow));
+//			SEXP * p = CHARACTER_POINTER(patterns);
+//
+//			for(int i(0); i<nrow; ++i){
+//				std::vector<char> pat(nrow+1,'0');
+//				for(size_t j(0); j<members[i].size(); ++j) pat[ members[i][j]-1 ] = '1';
+//				std::string pattern_string(pat.begin(), pat.end());
+//				SEXP pattern_cstring;
+//				PROTECT(pattern_cstring = mkChar(pattern_string.c_str()));
+//				p[i] = pattern_cstring;
+//				UNPROTECT(1); // pattern_cstring
+//			}
+//			PROTECT(r = NEW_LIST(2));
+//			SET_ELEMENT(r, 0, patterns);
 
-			for(int i(0); i<nrow; ++i){
-				std::vector<char> pat(nrow+1,'0');
-				for(size_t j(0); j<members[i].size(); ++j) pat[ members[i][j]-1 ] = '1';
-				std::string pattern_string(pat.begin(), pat.end());
-				SEXP pattern_cstring;
-				PROTECT(pattern_cstring = mkChar(pattern_string.c_str()));
-				p[i] = pattern_cstring;
-				UNPROTECT(1); // pattern_cstring
-			}
-			PROTECT(r = NEW_LIST(2));
-			SET_ELEMENT(r, 0, patterns);
-
-			SEXP memberlist;
 			PROTECT(memberlist = NEW_LIST(nrow));
 
 			for(int i(0); i<nrow; ++i){
@@ -76,17 +75,17 @@ extern "C" {
 				UNPROTECT(1); // member
 			}
 
-			SET_ELEMENT(r, 1, memberlist);
+//			SET_ELEMENT(r, 1, memberlist);
 			UNPROTECT(1); // memberlist
 
-      SEXP names;
-      PROTECT(names = NEW_CHARACTER(2));
-      SET_STRING_ELT(names, 0, COPY_TO_USER_STRING("pattern"));
-			SET_STRING_ELT(names, 1, COPY_TO_USER_STRING("member"));
-      SET_NAMES(r, names);
-			UNPROTECT(1); // names
-			UNPROTECT(1); // r
-			UNPROTECT(1); // patterns
+//      SEXP names;
+//      PROTECT(names = NEW_CHARACTER(2));
+//      SET_STRING_ELT(names, 0, COPY_TO_USER_STRING("pattern"));
+//			SET_STRING_ELT(names, 1, COPY_TO_USER_STRING("member"));
+//      SET_NAMES(r, names);
+//			UNPROTECT(1); // names
+//			UNPROTECT(1); // r
+//			UNPROTECT(1); // patterns
 
     } // try
     catch (const std::bad_alloc&) {
@@ -99,7 +98,7 @@ extern "C" {
       Rf_error( "C++ exception (unknown reason)." );
     }
 
-    return r;
+    return memberlist;
   }
 
   SEXP count_edge_matches(SEXP merge1_, SEXP merge2_){

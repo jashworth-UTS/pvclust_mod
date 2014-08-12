@@ -101,7 +101,8 @@ summary.pvclust <- function(object, ...){
 pvrect <- function(x, alpha=0.95, pv="au", type="geq", max.only=TRUE, border=2, ...)
   {
     len <- nrow(x$edges)
-    member <- hc2split(x$hclust)$member
+#    member <- hc2split(x$hclust)$member
+    member <- hc2split(x$hclust)
     order  <- x$hclust$order
     usr <- par("usr")
     xwd <- usr[2] - usr[1]
@@ -172,7 +173,8 @@ msplot <- function(x, edges=NULL, ...)
 lines.pvclust <- function(x, alpha=0.95, pv="au", type="geq", col=2, lwd=2, ...)
   {
     len <- nrow(x$edges)
-    member <- hc2split(x$hclust)$member
+#    member <- hc2split(x$hclust)$member
+    member <- hc2split(x$hclust)
     order  <- x$hclust$order
     usr <- par("usr")
     xwd <- usr[2] - usr[1]
@@ -195,6 +197,7 @@ lines.pvclust <- function(x, alpha=0.95, pv="au", type="geq", col=2, lwd=2, ...)
         if(wh)
           {
             mi <- member[[i]]
+						ma = mi
             ma <- match(mi, order)
 
             if(sum(match(ma, ht, nomatch=0)) == 0)
@@ -217,8 +220,10 @@ lines.pvclust <- function(x, alpha=0.95, pv="au", type="geq", col=2, lwd=2, ...)
 
 pvpick <- function(x, alpha=0.95, pv="au", type="geq", max.only=TRUE)
   {
+		cat('pvpick...\n')
     len <- nrow(x$edges)
-    member <- hc2split(x$hclust)$member
+#    member <- hc2split(x$hclust)$member
+    member <- hc2split(x$hclust)
     order  <- x$hclust$order
 
     ht <- c()
@@ -237,6 +242,7 @@ pvpick <- function(x, alpha=0.95, pv="au", type="geq", max.only=TRUE)
         if(wh)
           {
             mi <- member[[i]]
+						ma = mi
             ma <- match(mi, order)
 
             if(max.only == FALSE || (max.only && sum(match(ma, ht, nomatch=0)) == 0))

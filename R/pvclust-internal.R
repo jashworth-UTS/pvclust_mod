@@ -1,35 +1,30 @@
 hc2axes <- function(x)
 {
   A <- x$merge # (n,n-1) matrix
-  n <- nrow(A) + 1
   x.axis <- c()
   y.axis <- x$height
 
   x.tmp  <- rep(0,2)
   zz     <- match(1:length(x$order),x$order)
 
-    for(i in 1:(n-1)) {
-        ai <- A[i,1]
+    for(i in 1:nrow(A)) {
+        a1 <- A[i,1]
+        if(a1 < 0) x.tmp[1] <- zz[-a1]
+        else x.tmp[1] <- x.axis[a1]
 
-        if(ai < 0)
-          x.tmp[1] <- zz[-ai]
-        else
-          x.tmp[1] <- x.axis[ai]
-
-        ai <- A[i,2]
-
-        if(ai < 0)
-          x.tmp[2] <- zz[-ai]
-        else
-          x.tmp[2] <- x.axis[ai]
+        a2 <- A[i,2]
+        if(a2 < 0) x.tmp[2] <- zz[-a2]
+        else x.tmp[2] <- x.axis[a2]
 
         x.axis[i] <- mean(x.tmp)
       }
 
   return(data.frame(x.axis=x.axis,y.axis=y.axis))
 }
+#assignInNamespace('hc2axes',hc2axes,'pvclust')
+#plot(pvc)
 
-# for improved speed
+# for improved speed, also there was really never a need for 'pattern'; the use of character strings was also very slow, and even resulted in memory handling issues for big data (mkChar function may be buggy...)
 hc2split = function(hc){
 	.Call(hc2_split, hc$merge)
 }
@@ -52,11 +47,13 @@ boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
     stop("invalid scale parameter(r)")
   r <- size/n
 
-  hcsplit = hc2split(object.hclust)
+	# actually, don't even need to call this here yet
+#  hcsplit = hc2split(object.hclust)
 
 	# just keep track of unsorted tree correspondence for now (new cpp function below)
-	edges.cnt = rep(0,length(hcsplit$member))
-	names(edges.cnt) = hcsplit$pattern
+	edges.cnt = rep(0,nrow(object.hclust$merge))
+	# edges can be anonymous for now
+#	names(edges.cnt) = hcsplit$pattern
 
   st <- list()
 
@@ -93,8 +90,8 @@ boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
   if(na.flag == 1)
 	warning(paste("inappropriate distance matrices are omitted in computation: r = ", r), call.=FALSE)
 
-	# now sort edges.cnt by 'pattern' string
-	edges.cnt = edges.cnt[ order(names(edges.cnt)) ]
+	# actually, still no need to sort edge patterns
+#	edges.cnt = edges.cnt[ order(names(edges.cnt)) ]
 
   boot <- list(edges.cnt=edges.cnt, method.dist=method.dist, use.cor=use.cor,
                method.hclust=method.hclust, nboot=nboot, size=size, r=r, store=st)
@@ -110,17 +107,19 @@ boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
 
 pvclust.merge <- function(data, object.hclust, mboot){
 
-  pattern <- hc2split(object.hclust)$pattern
+	# no actual need to re/un-order hc's tree order (this seems to have been to only truly functional purpose of the 'pattern' character vectors in the old hc2split)
+#	cat('Getting pattern for original tree...\n')
+#  pattern <- hc2split(object.hclust)$pattern
 
   r     <- unlist(lapply(mboot,"[[","r"))
   nboot <- unlist(lapply(mboot,"[[","nboot"))
   store <- lapply(mboot,"[[", "store")
 
   rl <- length(mboot)
-  ne <- length(pattern)
+  ne <- nrow(object.hclust$merge)
 
   edges.bp <- edges.cnt <- data.frame(matrix(rep(0,ne*rl),nrow=ne,ncol=rl))
-  row.names(edges.bp) <- pattern
+#  row.names(edges.bp) <- pattern # nope
   names(edges.cnt) <- paste("r", 1:rl, sep="")
 
   for(j in 1:rl) {
