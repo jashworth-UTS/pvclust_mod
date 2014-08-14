@@ -160,11 +160,16 @@ pvclust.merge <- function(data, object.hclust, mboot){
 dist.pvclust <- function(x, method="euclidean", use.cor="pairwise.complete.obs")
 {
 #	cat('Distances...\n')
-  if(!is.na(pmatch(method,"correlation"))){
-		#ja here substituting with a faster c++ method, which also more literally obeys the notion of 'pairwise.complete.obs' for Pearson correlation than the R source does
+	fcmethods = c('fcpearson','fcpearsonvar','fcspearman')
+	if(method %in% fcmethods){
+		#ja here substituting with faster c++ methods
 		require(fastcluster)
-		res = fastcluster_correlation_distance(x)
-#    res <- as.dist(1 - cor(x, method="pearson", use=use.cor))
+		res = fastcluster_correlation_distance(x,which(fcmethods==method))
+    attr(res,"method") <- method
+    return(res)
+	}
+  else if(!is.na(pmatch(method,"correlation"))){
+	  res <- as.dist(1 - cor(x, method="pearson", use=use.cor))
     attr(res,"method") <- "correlation"
     return(res)
   }
