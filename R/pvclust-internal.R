@@ -40,7 +40,7 @@ pvclust.node <- function(x, r,...)
 boot.hclust <- function(r, data, object.hclust, method.dist, use.cor,
                         method.hclust, nboot, store, weight=F, save=T)
 {
-	if(save) store=T
+#	if(save) store=T
   n     <- nrow(data)
   size  <- round(n*r, digits=0)
   if(size == 0)
